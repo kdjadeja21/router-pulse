@@ -45,7 +45,7 @@ export function RateDisplay({ txRate, rxRate, peakRate }: RateDisplayProps) {
   const combinedPeak = peakRate * 2;
 
   return (
-    <div className="space-y-4 rounded-xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
+    <div className="h-full space-y-4 rounded-xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
       <div>
         <h3 className="text-sm font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
           Live Rates

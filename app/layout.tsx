@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Data Usage Tracker",
+  title: "Router Pulse",
   description: "Real-time WAN traffic monitoring for your router",
 };
 

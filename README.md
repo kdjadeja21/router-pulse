@@ -2,18 +2,28 @@
 
 A real-time WAN traffic monitor that connects directly to your home router and displays live usage stats — no cloud, no login, no external services.
 
+## Screenshots
+
+### Dashboard
+![RouterPulse Dashboard](./public/screenshots/router-pulse-dashboard.png)
+
+### Setup
+![RouterPulse Setup](./public/screenshots/router-pulse-setup.png)
+
 ## Features
 
-- **Live TX/RX rates** — real-time throughput bars updated on a configurable interval
-- **Rate history chart** — in-session line chart of upload/download speeds over time
+- **Live TX/RX rates** — real-time throughput bars (upload, download, combined) scaled to session peak
+- **Rate history chart** — in-session line chart of upload/download speeds over time (up to 30 data points)
 - **Per-interface stats** — bytes, packets, errors, and uptime for each WAN interface
-- **Packet summary** — total sent/received packet counts
-- **Session info** — router uptime, connection health, and error counts
+- **Packet summary** — sent/received packet counts with traffic share breakdown and direction balance
+- **Session info** — router uptime ring, active interface, connection health, and error counts
 - **Encrypted local config** — credentials stored with AES-256-GCM in `localStorage`
-- **Configurable poll interval** — 10s, 15s, 30s, 1 min, or 5 min
-- **Dark / light theme** — toggle with system preference support
-- **Graceful offline handling** — shows last known data when the router is unreachable
-- **Error classification** — distinguishes unreachable, auth, and config errors with fix suggestions
+- **Configurable poll interval** — 10s, 15s, 30s, 1 min, or 5 min (persisted across sessions)
+- **Dark / light theme** — toggle with system preference support and flash-free hydration
+- **Graceful offline handling** — shows last known data with a dismissible offline banner when the router is unreachable
+- **Error classification** — distinguishes unreachable, auth, and config errors with actionable fix suggestions
+- **Log out / reset** — clears all saved credentials and config from `localStorage` in one click
+- **Missing credentials banner** — setup page detects when neither `localStorage` nor `.env.local` has credentials and prompts the user
 
 ## Quick Start
 
@@ -83,27 +93,37 @@ npm run dev
 
 ```
 app/
-├── layout.tsx          # Root layout, fonts, ThemeProvider
+├── layout.tsx          # Root layout, fonts, ThemeProvider, flash-free theme script
 ├── page.tsx            # Home → Dashboard
 ├── globals.css         # Tailwind + CSS variables
 ├── setup/
-│   └── page.tsx        # Router configuration form
+│   └── page.tsx        # Router configuration form with missing-credentials detection
 └── api/
-    └── usage/
-        └── route.ts    # GET handler — fetches data from router (rate-limited to 1 req/10s)
+    ├── usage/
+    │   └── route.ts    # GET handler — fetches data from router (rate-limited to 1 req/10s)
+    └── config-status/
+        └── route.ts    # GET handler — reports whether server-side env config is present
 
 components/
-├── dashboard.tsx        # Main UI: polling, error handling, layout
+├── dashboard.tsx               # Main UI: wires useDashboard hook to layout and sub-components
+├── dashboard/
+│   ├── DashboardHeader.tsx     # Sticky header: title, poll interval selector, status, theme, user menu
+│   ├── DashboardSkeleton.tsx   # Loading skeleton shown on initial fetch
+│   ├── DashboardError.tsx      # Full-page error state with classified message and retry/setup actions
+│   └── OfflineBanner.tsx       # Dismissible banner shown when router is unreachable but data exists
 ├── summary-cards.tsx    # Total TX / RX / grand total cards
-├── rate-display.tsx     # Live TX/RX throughput bars
+├── rate-display.tsx     # Live TX/RX/combined throughput bars scaled to session peak
 ├── rate-chart.tsx       # Recharts line chart for rate history
 ├── interface-table.tsx  # Per-interface stats table
-├── packet-summary.tsx   # Sent/received packet counts
+├── packet-summary.tsx   # Sent/received packet counts with traffic share bar
 ├── session-info.tsx     # Uptime ring and session stats
 ├── status-badge.tsx     # Connection status indicator
 ├── theme-toggle.tsx     # Dark/light mode toggle
-├── user-menu.tsx        # Settings navigation
+├── user-menu.tsx        # Settings button and log-out (clear storage) button
 └── error-boundary.tsx   # React error boundary with fallback UI
+
+hooks/
+└── useDashboard.ts     # All dashboard state: polling, rate calculation, history, error handling
 
 lib/
 ├── router-client.ts    # Router login (MD5) + CGI scraping
@@ -111,7 +131,10 @@ lib/
 ├── rate-limiter.ts     # In-memory rate limiting for the API route
 ├── theme-context.tsx   # Light/dark theme state
 ├── types.ts            # Shared TypeScript interfaces
-└── utils.ts            # formatBytes, formatRate, withDisplay
+└── utils.ts            # formatBytes, formatRate, formatCount, withDisplay
+
+utils/
+└── errorUtils.ts       # Error classification (unreachable / auth / config / generic) and message helpers
 ```
 
 ## Privacy & Security
@@ -127,7 +150,7 @@ Currently tested with the **Airtel AOT5221ZY** router. The scraper in `lib/route
 
 ## Tech Stack
 
-- [Next.js](https://nextjs.org/) 16 (App Router)
+- [Next.js](https://nextjs.org/) 15 (App Router)
 - [React](https://react.dev/) 19
 - [Tailwind CSS](https://tailwindcss.com/) v4
 - [Recharts](https://recharts.org/)
