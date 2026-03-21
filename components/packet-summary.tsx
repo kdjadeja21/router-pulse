@@ -34,7 +34,7 @@ export function PacketSummaryDisplay({ packetSummary }: PacketSummaryProps) {
         </div>
       </div>
 
-      <div className="mb-4 grid grid-cols-1 gap-3 sm:grid-cols-2">
+      <div className="mb-4 grid grid-cols-2 gap-3">
         <div className="rounded-lg border border-emerald-200/70 bg-emerald-50/50 p-3.5 dark:border-emerald-900/60 dark:bg-emerald-950/20">
           <div className="flex items-center justify-between">
             <p className="text-xs font-medium uppercase tracking-wide text-emerald-700 dark:text-emerald-300">

@@ -29,6 +29,8 @@ function getConfig(overrides?: RouterConfig) {
       trafficTabConfig: `${baseUrl}/html/pages/systemMonitoring/trafficStatus/tab.json`,
       trafficWanFrame1: `${baseUrl}/cgi-bin/traffic_wan_frame1.cgi`,
       trafficWanFrame2: `${baseUrl}/cgi-bin/traffic_wan_frame2.cgi`,
+      devices_2g: `${baseUrl}/cgi-bin/wlan_staionInfo_list.cgi`,
+      devices_5g: `${baseUrl}/cgi-bin/wlan5_staionInfo_list.cgi`,
     },
   };
 }
@@ -55,6 +57,8 @@ async function request(
 
   return response;
 }
+
+
 
 async function requestData(
   url: string,
@@ -439,6 +443,7 @@ function createRouterClient(overrides?: RouterConfig) {
 
   return {
     fetchUsageData: fetchUsageDataWithRetry,
+    loginRouter,
   };
 }
 

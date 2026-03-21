@@ -12,6 +12,7 @@ import { RateChart } from "./rate-chart";
 import { InterfaceTable } from "./interface-table";
 import { PacketSummaryDisplay } from "./packet-summary";
 import { SessionInfo } from "./session-info";
+import { ConnectedDevicesCard } from "./connected-devices-card";
 
 export function Dashboard() {
   const router = useRouter();
@@ -45,7 +46,7 @@ export function Dashboard() {
 
   if (!data) return null;
 
-  const lastUpdated = new Date(data.capturedAt).toLocaleTimeString("en-US", {
+  const lastUpdated = new Date(data.usage.capturedAt).toLocaleTimeString("en-US", {
     hour12: false,
     hour: "2-digit",
     minute: "2-digit",
@@ -57,14 +58,14 @@ export function Dashboard() {
       {status === "offline" && !offlineBannerDismissed && (
         <OfflineBanner
           error={error}
-          lastCapturedAt={data.capturedAt}
+          lastCapturedAt={data.usage.capturedAt}
           onRetry={handleRetry}
           onDismiss={dismissOfflineBanner}
         />
       )}
 
       <DashboardHeader
-        routerModel={data.routerModel}
+        routerModel={data.usage.routerModel}
         lastUpdated={lastUpdated}
         status={status}
         pollIntervalMs={pollIntervalMs}
@@ -75,14 +76,17 @@ export function Dashboard() {
       />
 
       <div className="mx-auto max-w-6xl space-y-6 p-4 sm:p-6">
-        <SummaryCards totals={data.wan.totals} />
+        <SummaryCards totals={data.usage.wan.totals} />
 
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 lg:items-stretch">
+        <div className="grid grid-cols-1 gap-4 items-stretch sm:gap-6 lg:grid-cols-2">
+          <ConnectedDevicesCard devices={data.devices} />
           <RateDisplay txRate={rates.txRate} rxRate={rates.rxRate} peakRate={peakRate} />
-          <PacketSummaryDisplay packetSummary={data.wan.packetSummary} />
         </div>
 
-        <SessionInfo interfaces={data.wan.interfaces} capturedAt={data.capturedAt} />
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 lg:items-stretch">
+          <PacketSummaryDisplay packetSummary={data.usage.wan.packetSummary} />
+          <SessionInfo interfaces={data.usage.wan.interfaces} capturedAt={data.usage.capturedAt} />
+        </div>
 
         <section>
           <h2 className="mb-4 text-lg font-semibold text-zinc-900 dark:text-zinc-100">
@@ -95,7 +99,7 @@ export function Dashboard() {
           <h2 className="mb-4 text-lg font-semibold text-zinc-900 dark:text-zinc-100">
             Interfaces
           </h2>
-          <InterfaceTable interfaces={data.wan.interfaces} />
+          <InterfaceTable interfaces={data.usage.wan.interfaces} />
         </section>
       </div>
     </div>

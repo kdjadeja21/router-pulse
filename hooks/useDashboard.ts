@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useCallback, useRef, useMemo } from "react";
 import { useRouter } from "next/navigation";
-import type { UsageData } from "@/lib/types";
+import type { UsageApiResponse, UsageData } from "@/lib/types";
 import { getEncrypted } from "@/lib/storage";
 
 const HISTORY_LIMIT = 30;
@@ -59,7 +59,7 @@ function loadStoredPollInterval(): number {
 }
 
 export interface UseDashboardReturn {
-  data: UsageData | null;
+  data: UsageApiResponse | null;
   error: string | null;
   status: DashboardStatus;
   rates: RatePoint;
@@ -77,7 +77,7 @@ export interface UseDashboardReturn {
 export function useDashboard(): UseDashboardReturn {
   const router = useRouter();
 
-  const [data, setData] = useState<UsageData | null>(null);
+  const [data, setData] = useState<UsageApiResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [status, setStatus] = useState<DashboardStatus>("loading");
   const [offlineBannerDismissed, setOfflineBannerDismissed] = useState(false);
@@ -87,7 +87,7 @@ export function useDashboard(): UseDashboardReturn {
   const [hasStoredConfig, setHasStoredConfig] = useState<boolean>(false);
 
   const previousSampleRef = useRef<UsageData | null>(null);
-  const dataRef = useRef<UsageData | null>(null);
+  const dataRef = useRef<UsageApiResponse | null>(null);
 
   const fetchUsage = useCallback(async () => {
     try {
@@ -112,16 +112,16 @@ export function useDashboard(): UseDashboardReturn {
         throw new Error(body?.error ?? `HTTP ${res.status}`);
       }
 
-      const usage: UsageData = await res.json();
-      const newRates = calculateRates(previousSampleRef.current, usage);
+      const response: UsageApiResponse = await res.json();
+      const newRates = calculateRates(previousSampleRef.current, response.usage);
 
-      setData(usage);
-      dataRef.current = usage;
+      setData(response);
+      dataRef.current = response;
       setError(null);
       setStatus("connected");
       setOfflineBannerDismissed(false);
       setRates(newRates);
-      previousSampleRef.current = usage;
+      previousSampleRef.current = response.usage;
 
       setHistory((prev) => {
         const next = [...prev, newRates];

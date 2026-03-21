@@ -33,11 +33,13 @@ export function SummaryCards({ totals }: SummaryCardsProps) {
   ];
 
   return (
-    <div className="grid gap-4 grid-cols-1 sm:grid-cols-3">
+    <div className="grid gap-4 grid-cols-2 sm:grid-cols-3">
       {cards.map((card) => (
         <div
           key={card.label}
-          className={`rounded-xl border bg-gradient-to-br ${card.gradient} p-6 shadow-sm transition-shadow hover:shadow-md ${card.border}`}
+          className={`rounded-xl border bg-gradient-to-br ${card.gradient} p-6 shadow-sm transition-shadow hover:shadow-md ${card.border} ${
+            card.label === "Grand Total" ? "col-span-2 sm:col-span-1" : ""
+          }`}
         >
           <div className="flex items-start justify-between">
             <div>

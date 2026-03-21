@@ -58,6 +58,11 @@ export interface UsageData {
   wan: WanData;
 }
 
+export interface UsageApiResponse {
+  usage: UsageData;
+  devices: ConnectedDevicesData;
+}
+
 export interface RouterSession {
   cookieHeader: string;
   defaultHeaders: Record<string, string>;
@@ -98,4 +103,18 @@ export interface RecordsResponse {
   totals: { totalSent: number; totalReceived: number };
   range: FilterRange;
   dateRange: { start: string; end: string };
+}
+
+export interface ConnectedDevice {
+  name: string;
+  mac: string;
+  ip: string;
+  signal: string;
+  connectionType: string;
+}
+
+export interface ConnectedDevicesData {
+  devices_2g: ConnectedDevice[];
+  devices_5g: ConnectedDevice[];
+  all_devices: ConnectedDevice[];
 }
