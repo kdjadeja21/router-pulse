@@ -12,8 +12,9 @@ A real-time WAN traffic monitor that connects directly to your home router and d
 
 ## Features
 
-- **Live TX/RX rates** — real-time throughput bars (upload, download, combined) scaled to session peak
+- **Live throughput card** — animated upload/download rates with a combined total traffic readout
 - **Rate history chart** — in-session line chart of upload/download speeds over time (up to 30 data points)
+- **Connected devices card** — 2.4 GHz / 5 GHz device counts, signal-quality badges, and expandable client list
 - **Per-interface stats** — bytes, packets, errors, and uptime for each WAN interface
 - **Packet summary** — sent/received packet counts with traffic share breakdown and direction balance
 - **Session info** — router uptime ring, active interface, connection health, and error counts
@@ -100,7 +101,7 @@ app/
 │   └── page.tsx        # Router configuration form with missing-credentials detection
 └── api/
     ├── usage/
-    │   └── route.ts    # GET handler — fetches data from router (rate-limited to 1 req/10s)
+    │   └── route.ts    # GET handler — fetches WAN usage + connected devices (rate-limited to 1 req/10s)
     └── config-status/
         └── route.ts    # GET handler — reports whether server-side env config is present
 
@@ -112,7 +113,8 @@ components/
 │   ├── DashboardError.tsx      # Full-page error state with classified message and retry/setup actions
 │   └── OfflineBanner.tsx       # Dismissible banner shown when router is unreachable but data exists
 ├── summary-cards.tsx    # Total TX / RX / grand total cards
-├── rate-display.tsx     # Live TX/RX/combined throughput bars scaled to session peak
+├── connected-devices-card.tsx # Connected clients by Wi-Fi band with expandable list
+├── rate-display.tsx     # Live throughput card with upload/download rows and total traffic readout
 ├── rate-chart.tsx       # Recharts line chart for rate history
 ├── interface-table.tsx  # Per-interface stats table
 ├── packet-summary.tsx   # Sent/received packet counts with traffic share bar
@@ -144,13 +146,47 @@ utils/
 - The Next.js API route (`/api/usage`) runs locally and connects directly to your router on your local network.
 - Keep `.env.local` out of version control — it contains your router credentials.
 
+## API Response Shape
+
+`GET /api/usage` now returns both usage and connected-device data:
+
+```json
+{
+  "usage": {
+    "routerModel": "AOT5221ZY",
+    "capturedAt": "2026-03-21T12:34:56.000Z",
+    "wan": {
+      "packetSummary": { "sentPackets": 0, "receivedPackets": 0 },
+      "totals": {
+        "txPackets": 0,
+        "rxPackets": 0,
+        "txBytes": 0,
+        "rxBytes": 0,
+        "totalBytes": 0,
+        "display": {
+          "sent": { "bytes": 0, "kb": 0, "mb": 0, "gb": 0, "display": "0 B" },
+          "received": { "bytes": 0, "kb": 0, "mb": 0, "gb": 0, "display": "0 B" },
+          "total": { "bytes": 0, "kb": 0, "mb": 0, "gb": 0, "display": "0 B" }
+        }
+      },
+      "interfaces": []
+    }
+  },
+  "devices": {
+    "devices_2g": [],
+    "devices_5g": [],
+    "all_devices": []
+  }
+}
+```
+
 ## Router Compatibility
 
-Currently tested with the **Airtel AOT5221ZY** router. The scraper in `lib/router-client.ts` uses MD5-based session login and HTML parsing of CGI endpoints (`login_advance.cgi`, `traffic_wan_frame1.cgi`, `traffic_wan_frame2.cgi`). Other routers with a similar admin interface may work with minor adjustments.
+Currently tested with the **Airtel AOT5221ZY** router. The scraper in `lib/router-client.ts` uses MD5-based session login and HTML parsing of CGI endpoints (`login_advance.cgi`, `traffic_wan_frame1.cgi`, `traffic_wan_frame2.cgi`). Connected device discovery also queries WLAN station endpoints (`wlan_staionInfo_list.cgi`, `wlan5_staionInfo_list.cgi`) with tolerant response parsing (JSON and HTML-like payloads). Other routers with a similar admin interface may work with minor adjustments.
 
 ## Tech Stack
 
-- [Next.js](https://nextjs.org/) 15 (App Router)
+- [Next.js](https://nextjs.org/) 16 (App Router)
 - [React](https://react.dev/) 19
 - [Tailwind CSS](https://tailwindcss.com/) v4
 - [Recharts](https://recharts.org/)

@@ -75,9 +75,12 @@ export function ConnectedDevicesCard({ devices }: ConnectedDevicesCardProps) {
       <div className="pointer-events-none absolute right-0 top-0 h-28 w-28 rounded-full bg-indigo-500/10 blur-3xl dark:bg-indigo-400/10" />
 
       <header className="relative">
-        <h3 className="text-sm font-semibold tracking-wide text-zinc-800 dark:text-zinc-200">
+        <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
           Connected Devices
         </h3>
+        <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
+          Active clients across both Wi-Fi bands
+        </p>
       </header>
 
       <div className="relative mt-5 flex flex-col items-center justify-center text-center">

@@ -90,7 +90,7 @@ function UptimeRing({ pct }: { pct: number }) {
           strokeWidth="6"
           strokeDasharray={`${dash} ${circumference}`}
           strokeLinecap="round"
-          className="stroke-blue-500"
+          className="stroke-sky-500"
         />
       )}
     </svg>
@@ -121,30 +121,31 @@ export function SessionInfo({ interfaces, capturedAt }: SessionInfoProps) {
     : null;
 
   return (
-    <div className="rounded-xl border border-zinc-200 bg-white p-5 shadow-sm dark:border-zinc-700 dark:bg-zinc-900">
+    <section className="group relative h-full overflow-hidden rounded-[18px] border border-zinc-200/80 bg-zinc-50/95 p-5 shadow-[0_8px_24px_rgba(15,23,42,0.08)] ring-1 ring-white/60 backdrop-blur-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_14px_36px_rgba(15,23,42,0.12)] dark:border-zinc-700/60 dark:bg-zinc-900/85 dark:ring-zinc-700/40">
+      <div className="pointer-events-none absolute right-0 top-0 h-24 w-24 rounded-full bg-sky-500/10 blur-3xl dark:bg-sky-400/10" />
       {/* Header */}
-      <div className="mb-4">
-        <h3 className="text-sm font-semibold uppercase tracking-wider text-zinc-500 dark:text-zinc-400">
+      <div className="relative mb-4">
+        <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
           Session Info
         </h3>
-        <p className="mt-1 text-xs text-zinc-400 dark:text-zinc-500">
+        <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
           WAN session uptime and connection health for the active interface.
         </p>
       </div>
 
       {/* Primary uptime + ring */}
-      <div className="flex items-center gap-5">
+      <div className="relative flex items-center gap-5">
         <div className="relative flex-shrink-0">
           <UptimeRing pct={ringPct} />
           <div className="absolute inset-0 flex items-center justify-center">
-            <span className="text-[10px] font-bold leading-tight text-center text-zinc-700 dark:text-zinc-200 whitespace-pre-line">
+            <span className="whitespace-pre-line text-center text-[10px] font-bold leading-tight text-zinc-700 dark:text-zinc-200">
               {ringLabel(primarySecs)}
             </span>
           </div>
         </div>
 
         <div className="min-w-0 flex-1">
-          <span className="text-2xl font-bold text-zinc-900 dark:text-zinc-100">
+          <span className="text-3xl font-semibold tracking-tight text-zinc-900 tabular-nums dark:text-zinc-100">
             {formatUptime(primarySecs)}
           </span>
           <p className="mt-0.5 truncate text-xs text-zinc-500 dark:text-zinc-400">
@@ -176,68 +177,70 @@ export function SessionInfo({ interfaces, capturedAt }: SessionInfoProps) {
 
       {/* Stats row */}
       <div className="mt-4 grid grid-cols-3 gap-3">
-        <div className="rounded-lg bg-zinc-50 px-3 py-2.5 dark:bg-zinc-800/60">
-          <p className="text-[10px] font-medium uppercase tracking-wide text-zinc-400 dark:text-zinc-500">
+        <article className="rounded-[13px] border border-zinc-200/80 bg-white/80 px-3 py-2.5 shadow-sm dark:border-zinc-700/70 dark:bg-zinc-800/70">
+          <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-zinc-500 dark:text-zinc-400">
             Interfaces
           </p>
-          <p className="mt-0.5 text-lg font-bold text-zinc-900 dark:text-zinc-100">
+          <p className="mt-0.5 text-lg font-semibold text-zinc-900 tabular-nums dark:text-zinc-100">
             {interfaces.length}
           </p>
-        </div>
+        </article>
 
-        <div className="rounded-lg bg-zinc-50 px-3 py-2.5 dark:bg-zinc-800/60">
-          <p className="text-[10px] font-medium uppercase tracking-wide text-zinc-400 dark:text-zinc-500">
+        <article className="rounded-[13px] border border-zinc-200/80 bg-white/80 px-3 py-2.5 shadow-sm dark:border-zinc-700/70 dark:bg-zinc-800/70">
+          <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-zinc-500 dark:text-zinc-400">
             Session Data
           </p>
-          <p className="mt-0.5 text-sm font-bold text-zinc-900 dark:text-zinc-100">
+          <p className="mt-0.5 text-sm font-semibold text-zinc-900 tabular-nums dark:text-zinc-100">
             {formatBytes(primary.txBytes + primary.rxBytes).display}
           </p>
-        </div>
+        </article>
 
-        <div className="rounded-lg bg-zinc-50 px-3 py-2.5 dark:bg-zinc-800/60">
-          <p className="text-[10px] font-medium uppercase tracking-wide text-zinc-400 dark:text-zinc-500">
+        <article className="rounded-[13px] border border-zinc-200/80 bg-white/80 px-3 py-2.5 shadow-sm dark:border-zinc-700/70 dark:bg-zinc-800/70">
+          <p className="text-[10px] font-medium uppercase tracking-[0.14em] text-zinc-500 dark:text-zinc-400">
             Errors
           </p>
-          <p className={`mt-0.5 text-lg font-bold ${
+          <p className={`mt-0.5 text-lg font-semibold tabular-nums ${
             totalErrors > 0
               ? "text-amber-600 dark:text-amber-400"
               : "text-emerald-600 dark:text-emerald-400"
           }`}>
             {totalErrors > 0 ? totalErrors.toLocaleString() : "None"}
           </p>
-        </div>
+        </article>
       </div>
 
       {/* Per-interface breakdown (only when more than one) */}
       {interfaces.length > 1 && (
-        <div className="mt-4 space-y-2">
-          <p className="text-[10px] font-semibold uppercase tracking-wide text-zinc-400 dark:text-zinc-500">
+        <div className="mt-4 rounded-xl border border-zinc-200/80 bg-white/80 p-3 dark:border-zinc-700/70 dark:bg-zinc-800/70">
+          <p className="mb-2 text-[10px] font-semibold uppercase tracking-[0.14em] text-zinc-500 dark:text-zinc-400">
             All Interfaces
           </p>
-          {sorted.map((iface) => {
-            const secs = parseUptimeSeconds(iface.uptime);
-            const pct = Math.min(100, (secs / (primarySecs || 1)) * 100);
-            return (
-              <div key={iface.interface} className="space-y-1">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="font-medium text-zinc-700 dark:text-zinc-300">
-                    {iface.interface}
-                  </span>
-                  <span className="font-mono text-zinc-500 dark:text-zinc-400">
-                    {formatUptime(secs)}
-                  </span>
+          <div className="space-y-2">
+            {sorted.map((iface) => {
+              const secs = parseUptimeSeconds(iface.uptime);
+              const pct = Math.min(100, (secs / (primarySecs || 1)) * 100);
+              return (
+                <div key={iface.interface} className="space-y-1">
+                  <div className="flex items-center justify-between text-xs">
+                    <span className="font-medium text-zinc-700 dark:text-zinc-300">
+                      {iface.interface}
+                    </span>
+                    <span className="font-mono text-zinc-500 dark:text-zinc-400">
+                      {formatUptime(secs)}
+                    </span>
+                  </div>
+                  <div className="h-1.5 w-full overflow-hidden rounded-full bg-zinc-300/65 dark:bg-zinc-700/55">
+                    <div
+                      className="h-full rounded-full bg-gradient-to-r from-sky-500 to-blue-400 transition-all duration-700 ease-out"
+                      style={{ width: `${pct}%` }}
+                    />
+                  </div>
                 </div>
-                <div className="h-1.5 w-full overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-700">
-                  <div
-                    className="h-full rounded-full bg-blue-400 transition-all duration-500"
-                    style={{ width: `${pct}%` }}
-                  />
-                </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
         </div>
       )}
-    </div>
+    </section>
   );
 }

@@ -78,12 +78,12 @@ export function Dashboard() {
       <div className="mx-auto max-w-6xl space-y-6 p-4 sm:p-6">
         <SummaryCards totals={data.usage.wan.totals} />
 
-        <div className="grid grid-cols-1 gap-4 items-stretch sm:gap-6 lg:grid-cols-2">
+        <div className="grid grid-cols-1 items-stretch gap-5 sm:gap-6 lg:grid-cols-2">
           <ConnectedDevicesCard devices={data.devices} />
           <RateDisplay txRate={rates.txRate} rxRate={rates.rxRate} peakRate={peakRate} />
         </div>
 
-        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 lg:items-stretch">
+        <div className="grid grid-cols-1 gap-5 sm:gap-6 lg:grid-cols-2 lg:items-stretch">
           <PacketSummaryDisplay packetSummary={data.usage.wan.packetSummary} />
           <SessionInfo interfaces={data.usage.wan.interfaces} capturedAt={data.usage.capturedAt} />
         </div>

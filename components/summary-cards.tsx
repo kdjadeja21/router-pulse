@@ -33,31 +33,35 @@ export function SummaryCards({ totals }: SummaryCardsProps) {
   ];
 
   return (
-    <div className="grid gap-4 grid-cols-2 sm:grid-cols-3">
+    <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 sm:gap-5">
       {cards.map((card) => (
-        <div
+        <article
           key={card.label}
-          className={`rounded-xl border bg-gradient-to-br ${card.gradient} p-6 shadow-sm transition-shadow hover:shadow-md ${card.border} ${
+          className={`group relative overflow-hidden rounded-[18px] border border-zinc-200/80 bg-zinc-50/95 p-5 shadow-[0_8px_24px_rgba(15,23,42,0.08)] ring-1 ring-white/60 backdrop-blur-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_14px_36px_rgba(15,23,42,0.12)] dark:border-zinc-700/60 dark:bg-zinc-900/85 dark:ring-zinc-700/40 ${
             card.label === "Grand Total" ? "col-span-2 sm:col-span-1" : ""
           }`}
         >
+          <div className={`pointer-events-none absolute -right-6 -top-8 h-20 w-20 rounded-full bg-gradient-to-br ${card.gradient} blur-2xl`} />
           <div className="flex items-start justify-between">
             <div>
-              <p className="text-sm font-medium text-zinc-600 dark:text-zinc-400">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.16em] text-zinc-500 dark:text-zinc-400">
                 {card.label}
               </p>
-              <p className="mt-1 text-2xl font-bold tracking-tight text-zinc-900 dark:text-zinc-100">
+              <p className="mt-2 text-[2rem] font-semibold tracking-tight text-zinc-900 tabular-nums dark:text-zinc-100">
                 {card.value}
               </p>
-              <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-500">
+              <p className="mt-1 text-xs text-zinc-600 dark:text-zinc-400">
                 {card.subtext}
               </p>
             </div>
-            <span className="text-2xl font-light text-zinc-400 dark:text-zinc-500">
+            <span
+              className={`inline-flex h-8 w-8 items-center justify-center rounded-full border ${card.border} bg-white/80 text-base text-zinc-700 shadow-sm dark:bg-zinc-800/80 dark:text-zinc-200`}
+              aria-hidden
+            >
               {card.icon}
             </span>
           </div>
-        </div>
+        </article>
       ))}
     </div>
   );

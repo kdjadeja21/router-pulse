@@ -110,9 +110,10 @@ export function RateDisplay({ txRate, rxRate, peakRate }: RateDisplayProps) {
   }, [totalRate]);
 
   return (
-    <div className="group h-full rounded-2xl border border-zinc-200/70 bg-zinc-50/95 p-5 shadow-[0_8px_30px_-20px_rgba(15,23,42,0.4)] transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_18px_36px_-22px_rgba(15,23,42,0.45)] dark:border-zinc-700/60 dark:bg-zinc-900/90 dark:shadow-[0_10px_30px_-18px_rgba(0,0,0,0.85)]">
+    <div className="group relative h-full overflow-hidden rounded-[18px] border border-zinc-200/80 bg-zinc-50/95 p-5 shadow-[0_8px_24px_rgba(15,23,42,0.08)] ring-1 ring-white/60 backdrop-blur-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_14px_36px_rgba(15,23,42,0.12)] dark:border-zinc-700/60 dark:bg-zinc-900/85 dark:ring-zinc-700/40">
+      <div className="pointer-events-none absolute right-0 top-0 h-24 w-24 rounded-full bg-amber-400/10 blur-3xl dark:bg-amber-300/10" />
       <div className="space-y-1">
-        <h3 className="text-base font-semibold text-zinc-900 dark:text-zinc-100">
+        <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
           Throughput
         </h3>
         <p className="text-xs text-zinc-500 dark:text-zinc-400">
