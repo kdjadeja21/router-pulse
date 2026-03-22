@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import * as http from "http";
 import { getRouterClient } from "@/lib/router-client";
 import { usageRateLimiter } from "@/lib/rate-limiter";
-import type { ConnectedDevice } from "@/lib/types";
+import type { ConnectedDevice, GuestWifiData } from "@/lib/types";
 
 const USAGE_MIN_GAP_MS = 10_000;
 const LOCAL_RATE_LIMIT_KEY = "local";
@@ -190,6 +190,108 @@ function extractDevicesFromHTML(html: string): ConnectedDevice[] {
   return devices;
 }
 
+/** First More AP row (# column = 1) is guest; Active column uses i_active_on.gif / i_active_off.gif; SSID is third column. */
+function parseGuestFirstMoreApRow(html: string): { active: boolean; ssid: string } {
+  const empty = { active: false, ssid: "" };
+  if (!html || typeof html !== "string") return empty;
+
+  const rowRegex = /<tr[^>]*>([\s\S]*?)<\/tr>/gi;
+  let rowMatch: RegExpExecArray | null;
+
+  while ((rowMatch = rowRegex.exec(html)) !== null) {
+    const rowContent = rowMatch[1];
+    const cellRegex = /<td[^>]*>([\s\S]*?)<\/td>/gi;
+    const cells: string[] = [];
+    let cellMatch: RegExpExecArray | null;
+    while ((cellMatch = cellRegex.exec(rowContent)) !== null) {
+      cells.push(cellMatch[1]);
+    }
+    if (cells.length < 3) continue;
+
+    const firstText = cells[0].replace(/<[^>]+>/g, "").trim();
+    if (!/^\s*1\s*$/.test(firstText)) continue;
+
+    const active = /i_active_on\.gif/i.test(cells[1]);
+    const ssid = cells[2].replace(/<[^>]+>/g, "").trim();
+    return { active, ssid };
+  }
+
+  return empty;
+}
+
+function emptyGuestWifiData(): GuestWifiData {
+  return {
+    active_2g: false,
+    active_5g: false,
+    anyActive: false,
+    ssid_2g: "",
+    ssid_5g: "",
+    devices_2g: [],
+    devices_5g: [],
+    all_devices: [],
+  };
+}
+
+async function fetchGuestWifiData(
+  baseUrl: string,
+  authHeaders: Record<string, string>
+): Promise<GuestWifiData> {
+  const defaultHeaders = {
+    ...authHeaders,
+    Referer: `${baseUrl}/cgi-bin/login_advance.cgi`,
+  };
+
+  const more2 = `${baseUrl}/cgi-bin/wlan_moreAP.cgi`;
+  const more5 = `${baseUrl}/cgi-bin/wlan5_moreAP.cgi`;
+
+  let html2g = "";
+  let html5g = "";
+  try {
+    [html2g, html5g] = await Promise.all([
+      requestWithInsecureParser(more2, defaultHeaders),
+      requestWithInsecureParser(more5, defaultHeaders),
+    ]);
+  } catch (error) {
+    console.error("Error fetching guest moreAP pages:", error);
+    return emptyGuestWifiData();
+  }
+
+  const row2 = parseGuestFirstMoreApRow(html2g);
+  const row5 = parseGuestFirstMoreApRow(html5g);
+  const active_2g = row2.active;
+  const active_5g = row5.active;
+
+  const fetchGuestList = async (url: string): Promise<ConnectedDevice[]> => {
+    try {
+      const data = await requestWithInsecureParser(url, defaultHeaders);
+      return parseDevicesResponse(data);
+    } catch (error) {
+      console.error(`Error fetching guest devices from ${url}:`, error);
+      return [];
+    }
+  };
+
+  const list2 = `${baseUrl}/cgi-bin/wlan_staionInfo_list1.cgi`;
+  const list5 = `${baseUrl}/cgi-bin/wlan5_staionInfo_list1.cgi`;
+
+  const [devices_2g, devices_5g] = await Promise.all([
+    active_2g ? fetchGuestList(list2) : Promise.resolve([] as ConnectedDevice[]),
+    active_5g ? fetchGuestList(list5) : Promise.resolve([] as ConnectedDevice[]),
+  ]);
+
+  const anyActive = active_2g || active_5g;
+  return {
+    active_2g,
+    active_5g,
+    anyActive,
+    ssid_2g: row2.ssid,
+    ssid_5g: row5.ssid,
+    devices_2g,
+    devices_5g,
+    all_devices: [...devices_2g, ...devices_5g],
+  };
+}
+
 async function fetchDevices(
   baseUrl: string,
   authHeaders: Record<string, string>
@@ -294,13 +396,16 @@ export async function GET(req: NextRequest) {
     // Fetch usage data
     const usageData = await client.fetchUsageData();
     
-    // Fetch device data
     const session = await client.loginRouter(config);
-    const devicesData = await fetchDevices(config.baseUrl, session.defaultHeaders);
+    const [devicesData, guest] = await Promise.all([
+      fetchDevices(config.baseUrl, session.defaultHeaders),
+      fetchGuestWifiData(config.baseUrl, session.defaultHeaders),
+    ]);
 
     const responseData = {
       usage: usageData,
       devices: devicesData,
+      guest,
     };
 
     usageRateLimiter.updateCache(LOCAL_RATE_LIMIT_KEY, responseData);

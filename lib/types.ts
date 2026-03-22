@@ -61,6 +61,7 @@ export interface UsageData {
 export interface UsageApiResponse {
   usage: UsageData;
   devices: ConnectedDevicesData;
+  guest: GuestWifiData;
 }
 
 export interface RouterSession {
@@ -114,6 +115,19 @@ export interface ConnectedDevice {
 }
 
 export interface ConnectedDevicesData {
+  devices_2g: ConnectedDevice[];
+  devices_5g: ConnectedDevice[];
+  all_devices: ConnectedDevice[];
+}
+
+/** Guest Wi‑Fi: first More AP row per band; devices from *_staionInfo_list1.cgi when active. */
+export interface GuestWifiData {
+  active_2g: boolean;
+  active_5g: boolean;
+  anyActive: boolean;
+  /** First More AP row SSID from moreAP HTML (per band); empty if not parsed. */
+  ssid_2g: string;
+  ssid_5g: string;
   devices_2g: ConnectedDevice[];
   devices_5g: ConnectedDevice[];
   all_devices: ConnectedDevice[];

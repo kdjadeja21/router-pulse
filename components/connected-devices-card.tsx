@@ -1,10 +1,15 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useId, useState } from "react";
 import type { ConnectedDevicesData } from "@/lib/types";
 
 interface ConnectedDevicesCardProps {
   devices: ConnectedDevicesData;
+  /** `guest` uses a distinct tinted background vs the main card. */
+  variant?: "default" | "guest";
+  title?: string;
+  subtitle?: string;
+  emptyListMessage?: string;
 }
 
 function useCountUp(target: number, duration = 550) {
@@ -34,8 +39,36 @@ function useCountUp(target: number, duration = 550) {
   return value;
 }
 
-export function ConnectedDevicesCard({ devices }: ConnectedDevicesCardProps) {
+export function ConnectedDevicesCard({
+  devices,
+  variant = "default",
+  title = "Connected Devices",
+  subtitle = "Active clients across both Wi-Fi bands",
+  emptyListMessage = "No connected devices detected right now.",
+}: ConnectedDevicesCardProps) {
   const [isExpanded, setIsExpanded] = useState(false);
+  const listId = useId();
+  const isGuest = variant === "guest";
+
+  const shellClass = isGuest
+    ? "border border-violet-300 bg-violet-100 shadow-[0_8px_28px_rgba(109,40,217,0.18)] ring-2 ring-violet-200/90 dark:border-violet-800/50 dark:bg-violet-950/45 dark:shadow-[0_8px_28px_rgba(0,0,0,0.35)] dark:ring-1 dark:ring-violet-900/35"
+    : "border border-zinc-200/80 bg-zinc-50/90 shadow-[0_8px_24px_rgba(15,23,42,0.08)] ring-1 ring-white/60 dark:border-zinc-800 dark:bg-zinc-900/75 dark:ring-zinc-700/40";
+
+  const orbClass = isGuest
+    ? "bg-violet-400/30 blur-3xl dark:bg-violet-500/12"
+    : "bg-indigo-500/10 blur-3xl dark:bg-indigo-400/10";
+
+  const panelBtnClass = isGuest
+    ? "border border-violet-300 bg-white/95 shadow-sm hover:bg-violet-50 dark:border-violet-700/50 dark:bg-violet-950/40 dark:shadow-none dark:text-violet-100 dark:hover:bg-violet-950/60"
+    : "border border-zinc-200/80 bg-white/80 hover:bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-800/80 dark:text-zinc-200 dark:hover:bg-zinc-800";
+
+  const listPanelClass = isGuest
+    ? "border border-violet-300 bg-white shadow-sm dark:border-violet-800/50 dark:bg-violet-950/35 dark:shadow-none"
+    : "border border-zinc-200/80 bg-white/90 dark:border-zinc-700 dark:bg-zinc-800/70";
+
+  const rowItemClass = isGuest
+    ? "border border-violet-200 bg-white/90 shadow-sm hover:bg-violet-50 dark:border-violet-800/45 dark:bg-violet-950/30 dark:shadow-none dark:hover:bg-violet-950/45"
+    : "border border-zinc-200/80 bg-zinc-50/90 hover:bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-900/60 dark:hover:bg-zinc-900/80";
 
   const devices2g = devices.devices_2g ?? [];
   const devices5g = devices.devices_5g ?? [];
@@ -71,16 +104,18 @@ export function ConnectedDevicesCard({ devices }: ConnectedDevicesCardProps) {
   };
 
   return (
-    <section className="group relative h-full overflow-hidden rounded-[18px] border border-zinc-200/80 bg-zinc-50/90 p-6 shadow-[0_8px_24px_rgba(15,23,42,0.08)] ring-1 ring-white/60 backdrop-blur-sm transition-all duration-300 hover:-translate-y-0.5 hover:shadow-[0_14px_36px_rgba(15,23,42,0.12)] dark:border-zinc-800 dark:bg-zinc-900/75 dark:ring-zinc-700/40">
-      <div className="pointer-events-none absolute right-0 top-0 h-28 w-28 rounded-full bg-indigo-500/10 blur-3xl dark:bg-indigo-400/10" />
+    <section
+      className={`group relative h-full overflow-hidden rounded-[18px] border p-6 backdrop-blur-sm transition-all duration-300 hover:-translate-y-0.5 ${shellClass} ${
+        isGuest
+          ? "hover:shadow-[0_14px_40px_rgba(109,40,217,0.22)] dark:hover:shadow-[0_14px_36px_rgba(0,0,0,0.4)]"
+          : "hover:shadow-[0_14px_36px_rgba(15,23,42,0.12)]"
+      }`}
+    >
+      <div className={`pointer-events-none absolute right-0 top-0 h-28 w-28 rounded-full ${orbClass}`} />
 
       <header className="relative">
-        <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">
-          Connected Devices
-        </h3>
-        <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">
-          Active clients across both Wi-Fi bands
-        </p>
+        <h3 className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">{title}</h3>
+        <p className="mt-1 text-xs text-zinc-500 dark:text-zinc-400">{subtitle}</p>
       </header>
 
       <div className="relative mt-5 flex flex-col items-center justify-center text-center">
@@ -127,14 +162,16 @@ export function ConnectedDevicesCard({ devices }: ConnectedDevicesCardProps) {
         <button
           type="button"
           onClick={() => setIsExpanded((prev) => !prev)}
-          className="flex w-full items-center justify-between rounded-[12px] border border-zinc-200/80 bg-white/80 px-3.5 py-2.5 text-sm font-medium text-zinc-800 transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-800/80 dark:text-zinc-200 dark:hover:bg-zinc-800"
+          className={`flex w-full items-center justify-between rounded-[12px] border px-3.5 py-2.5 text-sm font-medium transition-colors ${panelBtnClass} ${
+            isGuest ? "text-violet-950 dark:text-violet-100" : "text-zinc-800"
+          }`}
           aria-expanded={isExpanded}
-          aria-controls="connected-device-list"
+          aria-controls={listId}
         >
           <span>Device List</span>
           <svg
             viewBox="0 0 20 20"
-            className={`h-4 w-4 text-zinc-500 transition-transform duration-300 dark:text-zinc-400 ${isExpanded ? "rotate-180" : ""}`}
+            className={`h-4 w-4 transition-transform duration-300 ${isExpanded ? "rotate-180" : ""} ${isGuest ? "text-violet-600 dark:text-violet-400" : "text-zinc-500 dark:text-zinc-400"}`}
             fill="none"
             stroke="currentColor"
             strokeWidth="1.8"
@@ -151,19 +188,25 @@ export function ConnectedDevicesCard({ devices }: ConnectedDevicesCardProps) {
         >
           <div className="overflow-hidden">
             <div
-              id="connected-device-list"
-              className="max-h-80 overflow-auto rounded-xl border border-zinc-200/80 bg-white/90 p-3 dark:border-zinc-700 dark:bg-zinc-800/70"
+              id={listId}
+              className={`max-h-80 overflow-auto rounded-xl border p-3 ${listPanelClass}`}
             >
               {total === 0 ? (
-                <div className="rounded-lg border border-dashed border-zinc-300 px-3 py-6 text-center text-sm text-zinc-500 dark:border-zinc-700 dark:text-zinc-400">
-                  No connected devices detected right now.
+                <div
+                  className={`rounded-lg border border-dashed px-3 py-6 text-center text-sm ${
+                    isGuest
+                      ? "border-violet-400 text-violet-800 dark:border-violet-700/50 dark:text-violet-300/90"
+                      : "border-zinc-300 text-zinc-500 dark:border-zinc-700 dark:text-zinc-400"
+                  }`}
+                >
+                  {emptyListMessage}
                 </div>
               ) : (
                 <ul className="space-y-2">
                   {allDevices.map(({ device, band }, index) => (
                     <li
                       key={`${band}-${device.mac || device.ip || "device"}-${index}`}
-                      className="rounded-xl border border-zinc-200/80 bg-zinc-50/90 p-3 transition-colors hover:bg-zinc-100 dark:border-zinc-700 dark:bg-zinc-900/60 dark:hover:bg-zinc-900/80"
+                      className={`rounded-xl border p-3 transition-colors ${rowItemClass}`}
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div className="min-w-0">
