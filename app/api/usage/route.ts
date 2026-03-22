@@ -219,6 +219,73 @@ function parseGuestFirstMoreApRow(html: string): { active: boolean; ssid: string
   return empty;
 }
 
+function stripTags(value: string): string {
+  return value
+    .replace(/<[^>]*>/g, " ")
+    .replace(/&nbsp;/gi, " ")
+    .replace(/&amp;/gi, "&")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+interface LanStatusRow {
+  interface: string;
+  status: string;
+  rate: string;
+}
+
+function parseStatusView(html: string): LanStatusRow[] {
+  if (!html || typeof html !== "string") return [];
+
+  const rows: LanStatusRow[] = [];
+  const rowRegex = /<tr[^>]*>([\s\S]*?)<\/tr>/gi;
+  let rowMatch: RegExpExecArray | null;
+
+  while ((rowMatch = rowRegex.exec(html)) !== null) {
+    const rowContent = rowMatch[1];
+    const cellRegex = /<td[^>]*>([\s\S]*?)<\/td>/gi;
+    const cells: string[] = [];
+    let cellMatch: RegExpExecArray | null;
+
+    while ((cellMatch = cellRegex.exec(rowContent)) !== null) {
+      cells.push(stripTags(cellMatch[1]));
+    }
+
+    if (cells.length < 2) continue;
+
+    const interfaceName = cells[0];
+    const status = cells[1];
+    const rate = cells[2] ?? "";
+
+    if (!interfaceName || /interface\s*status/i.test(interfaceName)) continue;
+
+    rows.push({ interface: interfaceName, status, rate });
+  }
+
+  return rows;
+}
+
+function extractUpLanNames(rows: LanStatusRow[]): string[] {
+  return rows
+    .filter((row) => /^lan\d+/i.test(row.interface.trim()) && /up/i.test(row.status.trim()))
+    .map((row) => row.interface.trim());
+}
+
+async function fetchLanStatus(
+  baseUrl: string,
+  authHeaders: Record<string, string>
+): Promise<{ all: LanStatusRow[]; up: string[] }> {
+  const statusUrl = `${baseUrl}/cgi-bin/statusview.cgi`;
+  try {
+    const html = await requestWithInsecureParser(statusUrl, authHeaders);
+    const all = parseStatusView(html);
+    return { all, up: extractUpLanNames(all) };
+  } catch (error) {
+    console.warn("Could not fetch statusview CGI:", error);
+    return { all: [], up: [] };
+  }
+}
+
 function emptyGuestWifiData(): GuestWifiData {
   return {
     active_2g: false,
@@ -397,15 +464,17 @@ export async function GET(req: NextRequest) {
     const usageData = await client.fetchUsageData();
     
     const session = await client.loginRouter(config);
-    const [devicesData, guest] = await Promise.all([
+    const [devicesData, guest, lanStatus] = await Promise.all([
       fetchDevices(config.baseUrl, session.defaultHeaders),
       fetchGuestWifiData(config.baseUrl, session.defaultHeaders),
+      fetchLanStatus(config.baseUrl, session.defaultHeaders),
     ]);
 
     const responseData = {
       usage: usageData,
       devices: devicesData,
       guest,
+      lanStatus,
     };
 
     usageRateLimiter.updateCache(LOCAL_RATE_LIMIT_KEY, responseData);

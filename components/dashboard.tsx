@@ -93,7 +93,7 @@ export function Dashboard() {
         {data.guest.anyActive ? (
           <div className="flex flex-col gap-5 sm:gap-6">
             <div className="grid grid-cols-1 items-stretch gap-5 sm:gap-6 lg:grid-cols-2">
-              <ConnectedDevicesCard devices={data.devices} />
+              <ConnectedDevicesCard devices={data.devices} upLans={data.lanStatus?.up ?? []} />
               <ConnectedDevicesCard
                 variant="guest"
                 devices={{
@@ -111,7 +111,7 @@ export function Dashboard() {
           </div>
         ) : (
           <div className="grid grid-cols-1 items-stretch gap-5 sm:gap-6 lg:grid-cols-2">
-            <ConnectedDevicesCard devices={data.devices} />
+            <ConnectedDevicesCard devices={data.devices} upLans={data.lanStatus?.up ?? []} />
             <RateDisplay txRate={rates.txRate} rxRate={rates.rxRate} peakRate={peakRate} />
           </div>
         )}

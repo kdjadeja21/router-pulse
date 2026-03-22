@@ -58,10 +58,22 @@ export interface UsageData {
   wan: WanData;
 }
 
+export interface LanInterfaceStatus {
+  interface: string;
+  status: string;
+  rate: string;
+}
+
+export interface LanStatusData {
+  all: LanInterfaceStatus[];
+  up: string[];
+}
+
 export interface UsageApiResponse {
   usage: UsageData;
   devices: ConnectedDevicesData;
   guest: GuestWifiData;
+  lanStatus?: LanStatusData;
 }
 
 export interface RouterSession {
