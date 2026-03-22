@@ -15,6 +15,8 @@ A real-time WAN traffic monitor that connects directly to your home router and d
 - **Live throughput card** — animated upload/download rates with a combined total traffic readout
 - **Rate history chart** — in-session line chart of upload/download speeds over time (up to 30 data points)
 - **Connected devices card** — 2.4 GHz / 5 GHz device counts, signal-quality badges, and expandable client list
+- **Guest network monitoring** — real-time client counts on guest Wi-Fi networks (per band) with distinct visual styling
+- **Active LAN ports** — wired device connection status and active port counts
 - **Per-interface stats** — bytes, packets, errors, and uptime for each WAN interface
 - **Packet summary** — sent/received packet counts with traffic share breakdown and direction balance
 - **Session info** — router uptime ring, active interface, connection health, and error counts
@@ -101,19 +103,19 @@ app/
 │   └── page.tsx        # Router configuration form with missing-credentials detection
 └── api/
     ├── usage/
-    │   └── route.ts    # GET handler — fetches WAN usage + connected devices (rate-limited to 1 req/10s)
+    │   └── route.ts    # GET handler — fetches WAN usage, connected devices, guest networks, and LAN status (rate-limited to 1 req/10s)
     └── config-status/
         └── route.ts    # GET handler — reports whether server-side env config is present
 
 components/
-├── dashboard.tsx               # Main UI: wires useDashboard hook to layout and sub-components
+├── dashboard.tsx               # Main UI: wires useDashboard hook to layout and sub-components, conditionally displays guest network cards
 ├── dashboard/
 │   ├── DashboardHeader.tsx     # Sticky header: title, poll interval selector, status, theme, user menu
 │   ├── DashboardSkeleton.tsx   # Loading skeleton shown on initial fetch
 │   ├── DashboardError.tsx      # Full-page error state with classified message and retry/setup actions
 │   └── OfflineBanner.tsx       # Dismissible banner shown when router is unreachable but data exists
 ├── summary-cards.tsx    # Total TX / RX / grand total cards
-├── connected-devices-card.tsx # Connected clients by Wi-Fi band with expandable list
+├── connected-devices-card.tsx # Connected clients by Wi-Fi band with expandable list, guest network support, and LAN port status
 ├── rate-display.tsx     # Live throughput card with upload/download rows and total traffic readout
 ├── rate-chart.tsx       # Recharts line chart for rate history
 ├── interface-table.tsx  # Per-interface stats table
@@ -148,7 +150,7 @@ utils/
 
 ## API Response Shape
 
-`GET /api/usage` now returns both usage and connected-device data:
+`GET /api/usage` now returns usage, connected-device, guest network, and LAN status data:
 
 ```json
 {
@@ -176,13 +178,33 @@ utils/
     "devices_2g": [],
     "devices_5g": [],
     "all_devices": []
+  },
+  "guest": {
+    "active_2g": false,
+    "active_5g": false,
+    "anyActive": false,
+    "ssid_2g": "",
+    "ssid_5g": "",
+    "devices_2g": [],
+    "devices_5g": [],
+    "all_devices": []
+  },
+  "lanStatus": {
+    "all": [
+      {
+        "interface": "lan1",
+        "status": "up",
+        "rate": "1000Mbps"
+      }
+    ],
+    "up": ["lan1", "lan2"]
   }
 }
 ```
 
 ## Router Compatibility
 
-Currently tested with the **Airtel AOT5221ZY** router. The scraper in `lib/router-client.ts` uses MD5-based session login and HTML parsing of CGI endpoints (`login_advance.cgi`, `traffic_wan_frame1.cgi`, `traffic_wan_frame2.cgi`). Connected device discovery also queries WLAN station endpoints (`wlan_staionInfo_list.cgi`, `wlan5_staionInfo_list.cgi`) with tolerant response parsing (JSON and HTML-like payloads). Other routers with a similar admin interface may work with minor adjustments.
+Currently tested with the **Airtel AOT5221ZY** router. The scraper in `lib/router-client.ts` uses MD5-based session login and HTML parsing of CGI endpoints (`login_advance.cgi`, `traffic_wan_frame1.cgi`, `traffic_wan_frame2.cgi`). Connected device discovery queries WLAN station endpoints (`wlan_staionInfo_list.cgi`, `wlan5_staionInfo_list.cgi`) with tolerant response parsing (JSON and HTML-like payloads). Guest network monitoring uses additional endpoints (`wlan_moreAP.cgi`, `wlan5_moreAP.cgi`, `wlan_staionInfo_list1.cgi`, `wlan5_staionInfo_list1.cgi`). LAN status is retrieved from `statusview.cgi`. Other routers with a similar admin interface may work with minor adjustments.
 
 ## Tech Stack
 
