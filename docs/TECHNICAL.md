@@ -1,0 +1,136 @@
+# RouterPulse — Technical reference
+
+Deep-dive documentation: architecture, API, security, and router compatibility. For setup and daily use, see the [main README](../README.md).
+
+## Environment variables
+
+| Variable | Description | Example |
+|---|---|---|
+| `ROUTER_BASE_URL` | Router admin base URL | `http://192.168.1.1` |
+| `ROUTER_USERNAME` | Router admin username | `admin` |
+| `ROUTER_PASSWORD` | Router admin password | `your_password` |
+| `ROUTER_MODEL` | Router model identifier | `AOT5221ZY` |
+
+If env vars are set, they take precedence over any client-side `localStorage` config.
+
+## Project structure
+
+```
+app/
+├── layout.tsx          # Root layout, fonts, ThemeProvider, flash-free theme script
+├── page.tsx            # Home → Dashboard
+├── globals.css         # Tailwind + CSS variables
+├── setup/
+│   └── page.tsx        # Router configuration form with missing-credentials detection
+└── api/
+    ├── usage/
+    │   └── route.ts    # GET handler — fetches WAN usage, connected devices, guest networks, and LAN status (rate-limited to 1 req/10s)
+    └── config-status/
+        └── route.ts    # GET handler — reports whether server-side env config is present
+
+components/
+├── dashboard.tsx               # Main UI: wires useDashboard hook to layout and sub-components, conditionally displays guest network cards
+├── dashboard/
+│   ├── DashboardHeader.tsx     # Sticky header: title, poll interval selector, status, theme, user menu
+│   ├── DashboardSkeleton.tsx   # Loading skeleton shown on initial fetch
+│   ├── DashboardError.tsx      # Full-page error state with classified message and retry/setup actions
+│   └── OfflineBanner.tsx       # Dismissible banner shown when router is unreachable but data exists
+├── summary-cards.tsx    # Total TX / RX / grand total cards
+├── connected-devices-card.tsx # Connected clients by Wi-Fi band with expandable list, guest network support, and LAN port status
+├── rate-display.tsx     # Live throughput card with upload/download rows and total traffic readout
+├── rate-chart.tsx       # Recharts line chart for rate history
+├── interface-table.tsx  # Per-interface stats table
+├── packet-summary.tsx   # Sent/received packet counts with traffic share bar
+├── session-info.tsx     # Uptime ring and session stats
+├── status-badge.tsx     # Connection status indicator
+├── theme-toggle.tsx     # Dark/light mode toggle
+├── user-menu.tsx        # Settings button and log-out (clear storage) button
+└── error-boundary.tsx   # React error boundary with fallback UI
+
+hooks/
+└── useDashboard.ts     # All dashboard state: polling, rate calculation, history, error handling
+
+lib/
+├── router-client.ts    # Router login (MD5) + CGI scraping
+├── storage.ts          # AES-256-GCM encrypted localStorage
+├── rate-limiter.ts     # In-memory rate limiting for the API route
+├── theme-context.tsx   # Light/dark theme state
+├── types.ts            # Shared TypeScript interfaces
+└── utils.ts            # formatBytes, formatRate, formatCount, withDisplay
+
+utils/
+└── errorUtils.ts       # Error classification (unreachable / auth / config / generic) and message helpers
+```
+
+## Privacy and security
+
+- All configuration is stored in your browser's `localStorage` (AES-256-GCM encrypted) or in your local `.env.local` file.
+- No data is sent to any external server or cloud service.
+- The Next.js API route (`/api/usage`) runs locally and connects directly to your router on your local network.
+- Keep `.env.local` out of version control — it contains your router credentials.
+
+## API response shape
+
+`GET /api/usage` returns usage, connected-device, guest network, and LAN status data:
+
+```json
+{
+  "usage": {
+    "routerModel": "AOT5221ZY",
+    "capturedAt": "2026-03-21T12:34:56.000Z",
+    "wan": {
+      "packetSummary": { "sentPackets": 0, "receivedPackets": 0 },
+      "totals": {
+        "txPackets": 0,
+        "rxPackets": 0,
+        "txBytes": 0,
+        "rxBytes": 0,
+        "totalBytes": 0,
+        "display": {
+          "sent": { "bytes": 0, "kb": 0, "mb": 0, "gb": 0, "display": "0 B" },
+          "received": { "bytes": 0, "kb": 0, "mb": 0, "gb": 0, "display": "0 B" },
+          "total": { "bytes": 0, "kb": 0, "mb": 0, "gb": 0, "display": "0 B" }
+        }
+      },
+      "interfaces": []
+    }
+  },
+  "devices": {
+    "devices_2g": [],
+    "devices_5g": [],
+    "all_devices": []
+  },
+  "guest": {
+    "active_2g": false,
+    "active_5g": false,
+    "anyActive": false,
+    "ssid_2g": "",
+    "ssid_5g": "",
+    "devices_2g": [],
+    "devices_5g": [],
+    "all_devices": []
+  },
+  "lanStatus": {
+    "all": [
+      {
+        "interface": "lan1",
+        "status": "up",
+        "rate": "1000Mbps"
+      }
+    ],
+    "up": ["lan1", "lan2"]
+  }
+}
+```
+
+## Router compatibility
+
+Currently tested with the **Airtel AOT5221ZY** router. The scraper in `lib/router-client.ts` uses MD5-based session login and HTML parsing of CGI endpoints (`login_advance.cgi`, `traffic_wan_frame1.cgi`, `traffic_wan_frame2.cgi`). Connected device discovery queries WLAN station endpoints (`wlan_staionInfo_list.cgi`, `wlan5_staionInfo_list.cgi`) with tolerant response parsing (JSON and HTML-like payloads). Guest network monitoring uses additional endpoints (`wlan_moreAP.cgi`, `wlan5_moreAP.cgi`, `wlan_staionInfo_list1.cgi`, `wlan5_staionInfo_list1.cgi`). LAN status is retrieved from `statusview.cgi`. Other routers with a similar admin interface may work with minor adjustments.
+
+## Tech stack
+
+- [Next.js](https://nextjs.org/) 16 (App Router)
+- [React](https://react.dev/) 19
+- [Tailwind CSS](https://tailwindcss.com/) v4
+- [Recharts](https://recharts.org/)
+- TypeScript 5
